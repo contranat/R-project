@@ -1,0 +1,494 @@
+---
+title: "BIOL668_R_Notebook"
+output:
+  pdf_document: default
+  html_document:
+    df_print: paged
+editor_options:
+  chunk_output_type: console
+---
+```{r libraries}
+#none needed
+```
+
+
+```{r load data}
+list.files('~') #are all the files present?
+d1=read.table('RTestData.txt', header=TRUE) 
+```
+
+```{r functions}
+d1 #outputs the whole datafrane
+fuso #cant use on its own
+d1$fuso  #have to specify column within dataframe
+attach(d1) #attaches dataframe to R notebook
+fuso #now can use on its own
+```
+
+```{r original data}
+#observe data
+hist(d1$strep) #looks skewed
+qqnorm(d1$strep)
+qqline(d1$strep, col = "Hotpink", lwd = 2) #not normal
+```
+
+```{r log transform data}
+#log transformation
+lstrep <- log(d1$strep)
+qqnorm(lstrep)
+qqline(lstrep, col = "Hotpink", lwd = 2) #more normal
+#plot histogram
+hist(lstrep) #looks more like a normal distribution
+```
+
+
+```{r t-test}
+#compare t-tests for orginal vs non-transformed
+t.test(d1$strep, d1$fuso) 
+t.test(lstrep, d1$fuso)
+```
+> t.test(d1$strep, d1$fuso) 
+
+	Welch Two Sample t-test
+
+data:  d1$strep and d1$fuso
+t = 3.3584, df = 97.994, p-value = 0.001117
+alternative hypothesis: true difference in means is not equal to 0
+95 percent confidence interval:
+ 2.116011 8.228433
+sample estimates:
+mean of x mean of y 
+13.958333  8.786111 
+
+> t.test(lstrep, d1$fuso)
+
+	Welch Two Sample t-test
+
+data:  lstrep and d1$fuso
+t = -10.219, df = 74.469, p-value = 8.04e-16
+alternative hypothesis: true difference in means is not equal to 0
+95 percent confidence interval:
+ -7.730404 -5.207866
+sample estimates:
+mean of x mean of y 
+ 2.316976  8.786111 
+ 
+How did the test statistic and p-value change? Why did the p-value change?
+- log transformation reduces variance and the skewness, making any difference appear more significant where p-value p-value = 8.04e-16 for logged vs p-value = 0.001117 for non-transformed.
+
+```{r primer data import}
+d2 <- read.csv("primer-1.csv")
+attach(d2)
+```
+
+```{r inspect data}
+d2 #shows the whole dataframe
+d2$Plate.Name #shows just the first variable (v1)
+```
+
+
+```{r order}
+newdata=d1[order(time),] #orders the column time 
+time1=subset(d1, time=='1') #subset the dataframe where time is all equal to 1
+```
+
+```{r write files}
+write.csv(time1,"time1.csv")
+
+```
+
+# RLab1.2
+
+```{r import r datasets}
+attach(airquality)
+attach(ToothGrowth)
+
+
+#observe data
+head(airquality)
+head(ToothGrowth)
+
+#omit NAs
+airquality_df <- na.omit(airquality)
+
+```
+
+# Air quality - Ozone
+
+```{r test for normality Ozone}
+hist(airquality_df$Ozone) #not normal
+qqnorm(airquality_df$Ozone)
+qqline(airquality_df$Ozone, col = "Hotpink", lwd = 2) #more normal
+shapiro.test(airquality_df$Ozone) #p-value < 0.05, not normal
+```
+
+
+```{r log ozone transformation airquality}
+Ozone_log <- log(airquality_df$Ozone)
+
+hist(Ozone_log) #not normal
+qqnorm(Ozone_log)
+qqline(Ozone_log, col = "Hotpink", lwd = 2) #more as normal
+shapiro.test(Ozone_log) #p-value < 0.05, not normal
+```
+
+```{r sqrt ozone transformation airquality}
+Ozone_sqrt <- sqrt(airquality_df$Ozone)
+
+hist(Ozone_sqrt) #not normal
+qqnorm(Ozone_sqrt)
+qqline(Ozone_sqrt, col = "Hotpink", lwd = 2) #more as normal
+shapiro.test(Ozone_sqrt) #p-value < 0.05, not normal
+
+```
+
+```{r}
+Ozone_cube <- airquality_df$Ozone^(1/3)
+
+hist(Ozone_cube) #looks normal
+qqnorm(Ozone_cube)
+qqline(Ozone_cube, col = "Hotpink", lwd = 2) #more as normal
+shapiro.test(Ozone_cube) #p-value > 0.05, normal
+```
+
+
+
+# Airquality - Solar.R
+
+```{r test for normality solar}
+hist(airquality_df$Solar.R) #not normal
+qqnorm(airquality_df$Solar.R)
+qqline(airquality_df$Solar.R, col = "Hotpink", lwd = 2) #more normal
+shapiro.test(airquality_df$Solar.R) #p-value < 0.05, not normal
+```
+
+
+```{r log solar transformation solar}
+solar_log <- log(airquality_df$Solar.R)
+
+hist(solar_log) #not normal, skewed
+qqnorm(solar_log)
+qqline(solar_log, col = "Hotpink", lwd = 2) #not normal at all
+shapiro.test(solar_log) #p-value < 0.05, not normal
+```
+
+```{r sqrt solar transformation airquality}
+solar_sqrt <- sqrt(airquality_df$Solar.R)
+
+hist(solar_sqrt) #not normal, less skewed
+qqnorm(solar_sqrt)
+qqline(solar_sqrt, col = "Hotpink", lwd = 2) #not normal
+shapiro.test(solar_sqrt) #p-value < 0.05, not normal
+
+```
+
+```{r rank solar transformation airquality}
+solar_rank <- rank(airquality_df$Solar.R)
+
+hist(solar_rank) #looks weird
+qqnorm(solar_rank)
+qqline(solar_rank, col = "Hotpink", lwd = 2) #not normal
+shapiro.test(solar_rank) #p-value < 0.05, not normal
+
+```
+
+```{r arcsin solar transformation airquality}
+solar_arc <- asin(sqrt(airquality_df$Solar.R)) #NaNs produced??
+
+```
+
+# Airquality - Wind
+
+
+```{r}
+#wind
+hist(airquality$Wind) #appears normal
+qqnorm(airquality$Wind)
+qqline(airquality$Wind, col = "Hotpink", lwd = 2) #not very normal 
+shapiro.test(airquality$Wind) #p-value > 0.05, normal
+```
+
+
+# Airquality - Temp
+```{r temp}
+hist(airquality$Temp) #appears normal
+qqnorm(airquality$Temp)
+qqline(airquality$Temp, col = "Hotpink", lwd = 2) #normal 
+shapiro.test(airquality$Temp) #p-value < 0.05, not normal
+```
+
+```{r log temp}
+temp_log <- log(airquality_df$Temp)
+
+hist(temp_log) #looks normal-ish
+qqnorm(temp_log)
+qqline(temp_log, col = "Hotpink", lwd = 2) #appears not normal 
+shapiro.test(temp_log) #p-value < 0.05, not normal
+```
+
+```{r sqrt temp transformation airquality}
+sqrt_temp <- sqrt(airquality_df$Temp)
+
+hist(sqrt_temp) #looks normal
+qqnorm(sqrt_temp)
+qqline(sqrt_temp, col = "Hotpink", lwd = 2) #normal-ish
+shapiro.test(sqrt_temp) #p-value < 0.05,  not normal
+
+```
+
+```{r rank temp transformation airquality}
+rank_temp <- sqrt(airquality_df$Temp)
+
+hist(rank_temp) #looks normal
+qqnorm(rank_temp)
+qqline(rank_temp, col = "Hotpink", lwd = 2) #normal-ish
+shapiro.test(rank_temp) #p-value < 0.05,  not normal
+
+```
+
+
+# Airquality - Month
+
+```{r}
+shapiro.test(month) #not numeric, can't apply?
+```
+
+
+```{r}
+month_log <- log(airquality_df$Month)
+
+hist(month_log) #not normal
+qqnorm(month_log)
+qqline(month_log, col = "Hotpink", lwd = 2) #not very normal 
+shapiro.test(month_log) #p-value < 0.05, not normal
+```
+
+```{r sqrt month transformation airquality}
+sqrt_month <- sqrt(airquality_df$Month)
+
+hist(sqrt_month) #looks not normal
+qqnorm(sqrt_month)
+qqline(sqrt_month, col = "Hotpink", lwd = 2) #normal-ish
+shapiro.test(sqrt_month) #p-value < 0.05, not normal
+
+```
+
+
+```{r rank month transformation airquality}
+rank_month <- rank(airquality_df$Month)
+
+hist(rank_month) #looks not normal
+qqnorm(rank_month)
+qqline(rank_month, col = "Hotpink", lwd = 2) #normal-ish
+shapiro.test(rank_month) #p-value < 0.05, not normal
+
+```
+
+# Airquality - Day
+
+```{r}
+hist(day) #not normal, skewed
+qqnorm(day)
+qqline(day, col = "Hotpink", lwd = 2) #not very normal 
+shapiro.test(day) #p-value < 0.05, not normal
+```
+
+
+```{r}
+day_log <- log(airquality_df$Day)
+
+hist(day_log) #not normal, skewed
+qqnorm(day_log)
+qqline(day_log, col = "Hotpink", lwd = 2) #not very normal 
+shapiro.test(day_log) #p-value < 0.05, not normal
+```
+
+```{r sqrt day transformation airquality}
+sqrt_day <- sqrt(airquality_df$Day)
+
+hist(sqrt_day) #looks potentially normal
+qqnorm(sqrt_day)
+qqline(sqrt_day, col = "Hotpink", lwd = 2) #normal-ish
+shapiro.test(sqrt_day) #p-value < 0.05, not normal
+
+```
+
+# ANOVA
+
+```{r anova}
+#set month as factor
+Month <- as.factor(airquality$Month)
+
+#perform anvoa 
+anovatemp <- aov(Temp ~ Month, data = airquality) #month is significant
+summary(anovatemp)
+```
+
+# Airquality pairs
+```{r scatterplots and correlations}
+#scatterplot of all pairs + shows correlations
+pairs(airquality)
+
+```
+
+# perform correlations
+
+```{r specific correlations}
+#specified by the assignment
+#correlation between ozone and solar
+cor.test(airquality$Ozone, airquality$Solar.R) #semi correlated
+
+#correlation between wind and temp
+cor.test(airquality$Wind, airquality$Temp) #not correlated
+
+
+```
+
+
+
+```{r modify p-value}
+#extracts p-value from the correlations performed above as well
+p_values <- c(
+  cor.test(airquality$Ozone, airquality$Solar.R)$p.value,
+  cor.test(airquality$Wind, airquality$Temp)$p.value
+)
+p_adjusted_fdr <- p.adjust(p_values, method = "fdr") #fdr
+p_adjusted_bonf <- p.adjust(p_values, method = "bonferroni") #bonferroni
+
+p_adjusted_fdr
+p_adjusted_bonf
+
+```
+output from the above:
+> p_adjusted_fdr
+[1] 1.793109e-04 5.283194e-09
+> p_adjusted_bonf
+[1] 3.586217e-04 5.283194e-09
+
+
+
+#ToothGrowth
+
+```{r toothgrowth data}
+data("ToothGrowth")
+head(ToothGrowth)
+```
+
+# ToothGrowth - Len
+
+```{r toothgrowth length}
+hist(ToothGrowth$len) #looks potentially normal
+qqnorm(ToothGrowth$len)
+qqline(ToothGrowth$len, col = "Hotpink", lwd = 2) #normal-ish
+shapiro.test(ToothGrowth$len) #p-value > 0.05, normal
+
+```
+
+# ToothGrowth - Supp
+
+```{r toothgrowth supp}
+ToothGrowth$supp
+qqnorm(ToothGrowth$supp) #all NAs?
+qqline(ToothGrowth$len, col = "Hotpink", lwd = 2) #not applied
+shapiro.test(ToothGrowth$len) #p-value > 0.05, normal?
+
+```
+
+# ToothGrowth - Dose
+
+```{r toothgrowth dose}
+hist(ToothGrowth$dose) #looks weird
+qqnorm(ToothGrowth$dose)
+qqline(ToothGrowth$dose, col = "Hotpink", lwd = 2) #normal-ish
+shapiro.test(ToothGrowth$dose) #p-value < 0.05, not normal
+
+
+#log transform
+ToothGrowth_log <- log(ToothGrowth$dose)
+hist(ToothGrowth_log ) #looks weird
+qqnorm(ToothGrowth_log )
+qqline(ToothGrowth_log , col = "Hotpink", lwd = 2) #normal-ish
+shapiro.test(ToothGrowth_log ) #still not normal
+
+#sqrt -
+ToothGrowth_sqr <- sqrt(ToothGrowth$dose)
+hist(ToothGrowth_sqr ) #looks weird
+qqnorm(ToothGrowth_sqr )
+qqline(ToothGrowth_sqr, col = "Hotpink", lwd = 2) #normal-ish
+shapiro.test(ToothGrowth_sqr ) #still not normal
+
+#cube root
+ToothGrowth_cube <- (ToothGrowth$dose)^1/3
+hist(ToothGrowth_cube ) #looks weird
+qqnorm(ToothGrowth_cube )
+qqline(ToothGrowth_cube, col = "Hotpink", lwd = 2) #normal-ish
+shapiro.test(ToothGrowth_cube ) #still not normal
+
+#rank
+ToothGrowth_rank <- rank(ToothGrowth$dose)
+hist(ToothGrowth_rank ) #looks weird
+qqnorm(ToothGrowth_rank )
+qqline(ToothGrowth_rank, col = "Hotpink", lwd = 2) #normal-ish
+shapiro.test(ToothGrowth_rank ) #still not normal??????
+
+
+```
+
+# Anova and Linear regression
+
+```{r anova + linear regression }
+#change factor
+supp <- as.factor(ToothGrowth$supp)
+
+#ANOVA
+anova <- aov(len ~ supp, data = ToothGrowth)
+
+# Display summary
+summary(anova) #non significant > 0.05
+
+
+#linear regression
+dose <- as.numeric(ToothGrowth$dose)
+
+# Run Linear Regression
+model <- lm(len ~ dose, data = ToothGrowth)
+summary(model) #does and len are significant <0.05
+
+```
+
+# toothgrowth pairs
+```{r scatterplots and correlations for toothgrowth}
+#scatterplot of all pairs + shows correlations
+pairs(ToothGrowth) #hard to see? but len and dose appear correlated
+
+```
+
+# perform correlations
+
+```{r specific correlation to see any correlations}
+#specified by the assignment
+cor.test(ToothGrowth$len, ToothGrowth$dose) #semi correlated
+
+
+
+```
+
+
+
+```{r modify p-value}
+#extracts p-value from the correlations performed above as well
+corr_tooth <- cor.test(ToothGrowth$len, ToothGrowth$dose)
+
+#extract p-value
+p_value <- corr_tooth$p.value
+
+
+#adjusts p-value based on method 
+p_adjusted_fdr <- p.adjust(p_value, method = "fdr") #fdr
+p_adjusted_bonf <- p.adjust(p_value, method = "bonferroni") #bonferroni
+
+#outputs adjusted p-values
+p_adjusted_fdr
+p_adjusted_bonf
+
+```

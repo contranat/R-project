@@ -1,0 +1,256 @@
+---
+title: "R Notebook"
+output: html_notebook
+editor_options: 
+  chunk_output_type: console
+---
+```{r libraries}
+library(ggplot2)
+library(vegan)
+```
+
+
+
+```{r import data}
+data <- read.table("RTestData.txt", header = TRUE)
+```
+
+# Part A: Univariate statistics with R
+Normality check & data transformation
+
+```{r normality of bacteria}
+#strep
+hist(data$strep) #looks skewed
+qqnorm(data$strep)
+qqline(data$strep, col = "Hotpink", lwd = 2) #not normal
+shapiro.test(data$strep) #p < 0.05, not normal
+
+#prev
+hist(data$prev) #looks skewed
+qqnorm(data$prev)
+qqline(data$prev, col = "Hotpink", lwd = 2) #not normal
+shapiro.test(data$prev) #p < 0.05, not normal
+
+#lepto
+hist(data$lepto) #looks skewed
+qqnorm(data$lepto)
+qqline(data$lepto, col = "Hotpink", lwd = 2) #normal-ish
+shapiro.test(data$lepto) #p > 0.05, normal
+
+#fuso
+hist(data$fuso) #looks skewed
+qqnorm(data$fuso)
+qqline(data$fuso, col = "Hotpink", lwd = 2) #normal-ish
+shapiro.test(data$fuso) #p < 0.05, not normal
+
+#veil
+hist(data$veil) #looks skewed
+qqnorm(data$veil)
+qqline(data$veil, col = "Hotpink", lwd = 2) #not normal
+shapiro.test(data$veil) #p < 0.05, not normal
+
+#deepest
+hist(data$deepest) #looks normal
+qqnorm(data$deepest)
+qqline(data$deepest, col = "Hotpink", lwd = 2) #normal
+shapiro.test(data$deepest) #p > 0.05, normal
+```
+
+```{r data transformation}
+#strep
+strep_log <- log(data$strep)
+hist(strep_log) #looks normal
+qqnorm(strep_log)
+qqline(strep_log, col = "Hotpink", lwd = 2) #normal
+shapiro.test(strep_log) #normal
+
+#prev
+prev_log <- log(data$prev + 0.001) #added 0.001 to account for zeros 
+shapiro.test(prev_log) #not normal
+
+prev_sqrt <- sqrt(data$prev)
+hist(prev_sqrt) #looks normal
+qqnorm(prev_sqrt)
+qqline(prev_sqrt, col = "Hotpink", lwd = 2) #normal
+shapiro.test(prev_sqrt) #normal
+
+#fuso
+fuso_log <- log(data$fuso + 0.001) #accounts for zeros
+shapiro.test(fuso_log) #not normal
+
+fuso_sqrt <- sqrt(data$fuso)
+shapiro.test(fuso_sqrt) #not normal
+
+fuso_rank <- rank(data$fuso)
+hist(fuso_rank) #looks normal-ish
+qqnorm(fuso_rank)
+qqline(fuso_rank, col = "Hotpink", lwd = 2) #normal
+shapiro.test(fuso_rank) #normal p > 0.05
+
+#veil
+veil_log <- log(data$veil)
+shapiro.test(veil_log) #not normal
+
+veil_sqrt <- sqrt(data$veil)
+hist(veil_sqrt) #looks normal
+qqnorm(veil_sqrt)
+qqline(veil_sqrt, col = "Hotpink", lwd = 2) #normal
+shapiro.test(veil_sqrt) #normal
+``` 
+
+
+One-way ANOVA and summary and boxplots:
+(1) Lepto by time
+(2) Strep by time
+
+```{r factor change}
+data$time <- factor(data$time)
+```
+
+
+```{r anova}
+#anova, summary, boxplot for lepto vs time
+anov1 <- aov(lepto ~ time, data = data)
+summary(anov1) #time is significant (p < 0.05)
+boxplot(lepto ~ time, data = data, main = "Lepto vs Time")
+
+#anova, summary, boxplot for strep_log vs time
+anov2 <- aov(strep_log ~ time, data = data)
+summary(anov2) #not significant (p > 0.05)
+boxplot(strep_log ~ time, data = data, main = "Strep vs Time")
+```
+
+Correlation analysis (cor.test)
+(1) Strep vs. prev
+(2) Strep vs. fuso
+(3) Fuso vs. lepto
+```{r correlation}
+cor.test(strep_log, prev_sqrt) #neg correlated, significant
+cor.test(strep_log, fuso_rank) #neg correlated, significant
+cor.test(fuso_rank, data$lepto) #neg correlated, not significant
+```
+
+Linear regressions
+Use the lm command and use plot and abline to produce graphs.
+(1) Strep vs. deepest
+(2) Fuso vs. deepest
+
+```{r}
+#linear regression of strep vs deepest
+mod1 <- lm(strep_log ~ deepest, data = data)
+plot(mod1) #plots all residuals
+abline(mod1, col = "red", lwd = 2)
+summary(mod1) #deepest is not significant p > 0.05
+
+#linear regression of fuso vs deepest
+mod2 <- lm(fuso_rank ~ deepest, data = data)
+plot(mod2)
+abline(mod2, col = "red", lwd = 2)
+summary(mod2) #deepest is significant p < 0.05
+```
+
+
+# Part B: Use ggplot2 to make pretty graphs
+Produce the following graphs:
+(1) ggplot histogram of prev variable.
+(2) ggplot scatterplot of strep by deepest, colored by time
+(3) ggplot scatterplot of fuso by deepest
+(4) Same as 3 but use smoothing algorithm
+
+```{r histogram prev}
+#fancy histogram of prev
+prev_plot <- ggplot(data, aes(x = prev_sqrt)) + geom_histogram(binwidth = 0.5, fill = "white", color = "black") + labs(title = "Prev", x= "Prev") + theme_classic()
+prev_plot
+```
+
+```{r scatterplot strep vs deepest}
+#scatterplot for strep vs deepest color coded by time
+plot2 <- ggplot(data, aes(strep_log, deepest, colour = time)) + geom_point() + labs(title = "Strep vs Deepest", x = "Strep", y = "Deepest") + theme_classic()
+plot2
+```
+
+```{r}
+#scatterplot of fuso vs deepest
+plot3 <- ggplot(data, aes(fuso_rank, deepest)) + geom_point() + labs(title = "Deepest vs Fuso", x = "Fuso", y = "Deepest") + theme_classic() + geom_smooth(method=lm)
+plot3
+```
+
+
+
+# Part C: Vegan analysis
+(1) Calculate alpha diversity (Shannon) for the dataset.
+(2) Rarefy the data and make a plot using rarecurve.
+(3) Calculate Bray-Curtis dissimilarity matrix, show the matrix and plot a histogram.
+
+```{r new data}
+#takes columns of interests and creates new dataframe
+newdata = data[2:6]
+newdata <- round(newdata)
+```
+
+```{r alpha diversity}
+shannon <- diversity(newdata) #shannon is the default
+shannon #ranges from 1.5 - 3.4, the higher = more diverse 
+```
+
+note: rarefaction generates the expected number of species in a small collection of n individuals (or n samples) drawn at random from the large pool of N samples.
+```{r rarefraction}
+spAbund <- rowSums(newdata) #number of individuals found in each plot 
+spAbund
+
+raremin <- min(rowSums(newdata))
+raremin #smallest number of observations per sample, 11
+
+#expected rarefied number of species
+sRare <- rarefy(newdata, raremin)
+sRare
+
+#rarecurve plot
+rarecurve(newdata, col = "blue")
+```
+
+```{r bray-curtis}
+par(mfrow = c(1,2))
+bray = vegdist(newdata, "bray") #bray-curtis dissimarility matrix
+bray #prints/shows matrix
+hist(bray, xlim = range(0,1)) #histogram
+```
+
+
+(1) Make a multidimensional scaling plot using the Bray-Curtis matrix.
+(2) Color the plot by status, then time.
+```{r}
+newnew_data = data[2:8]
+```
+
+
+```{r MDS}
+#combines several steps into one
+community.mds <- metaMDS(comm = newnew_data, distance = "bray", trace = FALSE, autotransform = FALSE)
+
+plot(community.mds$points)
+```
+
+```{r new dataframe}
+#extracts x and y and creates a new dataframe
+MDS_xy <- data.frame(community.mds$points)
+
+MDS_xy$status <- factor(data$status)
+MDS_xy$time <- factor(data$time)
+```
+
+```{r new plot}
+#mds by status
+ggplot(MDS_xy, aes(x = MDS1, y = MDS2, color = status)) +
+  geom_point(size = 3) +
+  theme_bw() +
+  labs(title = "MDS Colored by Status")
+
+#mds by time
+ggplot(MDS_xy, aes(x = MDS1, y = MDS2, color = time)) +
+  geom_point(size = 3) +
+  theme_bw() +
+  labs(title = "MDS Colored by Time")
+```
+
+
